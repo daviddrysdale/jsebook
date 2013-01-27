@@ -3,12 +3,13 @@ var loadFileUrl = function (url) {
     var xhr = new XMLHttpRequest();
     xhr.open('GET', url, false);  // synchronous
     // retrieve data unprocessed as a binary string
-    xhr.overrideMimeType("application/octet-string");
-    xhr.send();
+    xhr.overrideMimeType("text\/plain; charset=x-user-defined");
+    xhr.send(null);
+
     if (xhr.status === 200) {
         var bytes = [];
         for (var ii=0; ii<xhr.response.length; ii++) {
-            bytes.push(xhr.response.charCodeAt(ii) & 0xFF);
+            bytes.push(xhr.responseText.charCodeAt(ii) & 0xFF);
         }
         return bytes;
     } else {
