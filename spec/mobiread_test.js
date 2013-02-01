@@ -27,7 +27,7 @@ describe("MobiRead", function() {
     it("should load and parse a valid file", function() {
         var data;
         var loadIt = function() {
-            data = loadFileUrl("http://localhost/~dmd/jsebook/data/testbook.mobi");
+            data = loadFileUrl("data/testbook.mobi");
         }
         expect(loadIt).not.toThrow();
         var book = new MobiBook(data);
