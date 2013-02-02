@@ -1,6 +1,9 @@
 
 // Require BufferPack
 var MobiBook = function(data) {
+    if (!(this instanceof MobiBook)) {
+        return new MobiBook(data); // protect against calls without new
+    }
     this.data = data;
     //  @@ throw if no BufferPack?
 
