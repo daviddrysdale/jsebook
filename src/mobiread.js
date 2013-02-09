@@ -157,6 +157,10 @@ var MobiBook = function(data) {
     // Record1..RecordN
     for (var ii = 1; ii <  this.pdfHdr.recordInfo.length; ii++) {
         var info = this.pdfHdr.recordInfo[ii];
+        if (ii >= 1) {
+            var text = MobiBook.palmDocUncompress(data, info.offset, info.offset + info.recordLen);
+            console.log(text);
+        }
     }
 };
 
@@ -181,6 +185,61 @@ MobiBook.readInteger = function(data, offset, forward) {
     }
     // @@@ need to return consumed count or new offset value
 }
+
+MobiBook.palmDocUncompress = function(data, offset, boundary) {
+    var ii;
+    var result = [];
+    var ASCII_SPACE = 0x20;
+    while (offset < boundary) {
+        if (data[offset] === 0) {
+            result.push(0);
+            offset++;
+        } else if (data[offset] >= 0x01 && data[offset] <= 0x08) {
+            var len = data[offset];
+            offset++;
+            for (ii = 0; ii < len; ii++) {
+                result.push(data[offset + ii]);
+            }
+            offset += len;
+        } else if (data[offset] >= 0x09 && data[offset] <= 0x7f) {
+            result.push(data[offset]);
+            offset++;
+        } else if (data[offset] >= 0x80 && data[offset] <= 0xbf) {
+            var dist_len = (((data[offset] & 0x3F) << 8) | data[offset+1]);  // 14 bit distance+length
+            var dist = (dist_len >> 3);  // 11 bit offset backwards
+            var len = 3 + (dist_len & 0x07);  // 3 bit length
+            var dest_offset = result.length - dist;
+            if (dest_offset < 0) {
+                console.log("*************************** dist_len=" + toHex(dist_len) + " : dist=" + dist + " len=" + len + " currentlength=" + result.length);
+                // @@@ throw Error("Compression offset before start of data");
+            } else {
+                for (ii = 0; ii < len; ii++) {
+                    result.push(result[dest_offset + ii]);
+                }
+            }
+            offset += 2;
+        } else {  // data[offset] >= 0xc0
+            result.push(ASCII_SPACE);
+            result.push(data[offset] ^ 0x80);
+            offset++;
+        }
+    }
+    return String.fromCharCode.apply(String, result);
+}
+
+// @@@ temporary for debugging:
+function toHex(number) {
+    var hexes = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'];
+    var hex = '';
+    var nibble;
+    do {
+        nibble = number & 0x0f;
+        number = number >> 4;
+        hex = hexes[nibble] + hex;
+    } while (number);
+    return '0x'+hex;
+}
+
 MobiBook.prototype.creationDate = function() {
     return MobiBook.dateConvert(this.pdfHdr.created);
 };
