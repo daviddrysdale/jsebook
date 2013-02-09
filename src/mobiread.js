@@ -78,6 +78,18 @@ MobiBook.dateConvert = function(timestamp) {
     }
 };
 
+MobiBook.readInteger = function(data, offset, forward) {
+    forward = typeof forward === "undefined" ? true : !!forward;
+    var value = 0;
+    while (true) {
+        value = ((value << 7) | (data[offset] & 0x7F));
+        if ((data[offset] & 0x80) !== 0) {
+            return value;
+        }
+        offset++;
+    }
+    // @@@ need to return consumed count or new offset value
+}
 MobiBook.prototype.creationDate = function() {
     return MobiBook.dateConvert(this.pdfHdr.created);
 };
