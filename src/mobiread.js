@@ -169,7 +169,7 @@ var MobiBook = function(data) {
             var extraDataLen = MobiBook.readBackwardInteger(data, info.offset + info.recordLen);
             len -= extraDataLen;
         }
-        if (ii >= 1) {
+        if (ii < this.mobiHdr.firstNonBookIndex) {
             var text = MobiBook.palmDocUncompress(data, info.offset, info.offset + len);
             console.log(text);
         }
