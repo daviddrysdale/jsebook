@@ -162,8 +162,15 @@ var MobiBook = function(data) {
     // Record1..RecordN
     for (var ii = 1; ii <  this.pdfHdr.recordInfo.length; ii++) {
         var info = this.pdfHdr.recordInfo[ii];
+        var len = info.recordLen;
+        var RECORD_TRAILING_DATA_FLAGS = 0x07;
+        if (this.mobiHdr.extraRecordDataFlags & RECORD_TRAILING_DATA_FLAGS) {
+            // There is trailing <data><size> at the end of each record
+            var extraDataLen = MobiBook.readBackwardInteger(data, info.offset + info.recordLen);
+            len -= extraDataLen;
+        }
         if (ii >= 1) {
-            var text = MobiBook.palmDocUncompress(data, info.offset, info.offset + info.recordLen);
+            var text = MobiBook.palmDocUncompress(data, info.offset, info.offset + len);
             console.log(text);
         }
     }
