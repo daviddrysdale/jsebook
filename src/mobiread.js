@@ -78,6 +78,11 @@ var MobiBook = function(data) {
             this.mobiHdr[k] = moreMobiHdr[k];
         }
     }
+    var titleOffset = (this.pdfHdr.recordInfo[0].offset + this.mobiHdr.fullNameOffset);
+    if ((titleOffset + this.mobiHdr.fullNameLen) <= data.length) {
+        this.title = String.fromCharCode.apply(String, data.slice(titleOffset,
+                                                                  titleOffset + this.mobiHdr.fullNameLen));
+    }
 
     // Record0: Next is a possible EXTH header
     var EXTH_PRESENT_FLAG = 0x40

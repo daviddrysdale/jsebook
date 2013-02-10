@@ -32,6 +32,7 @@ describe("MobiRead", function() {
         expect(loadIt).not.toThrow();
         var book = new MobiBook(data);
         expect(book.creationDate()).toEqual(new Date("Sat Sep 22 2012 21:40:59 GMT+0100 (BST)"));
+        expect(book.title).toEqual("Lady Susan");
     });
     it("should cope with accidental construction without new", function() {
     });
