@@ -48,6 +48,12 @@ describe("MobiRead utilities", function() {
         bytes[1] = 0x22;
         bytes[2] = 0x91;
         expect(MobiBook.readInteger(bytes, 0)).toEqual(0x11111);
-        expect(MobiBook.readInteger(bytes, 0, true)).toEqual(0x11111);
+    });
+    it("should decode backward-encoded variable width integers", function() {
+        var bytes = [];
+        bytes[0] = 0x84;
+        bytes[1] = 0x22;
+        bytes[2] = 0x11;
+        expect(MobiBook.readBackwardInteger(bytes, 3)).toEqual(0x11111);
     });
 });

@@ -178,8 +178,8 @@ MobiBook.dateConvert = function(timestamp) {
     }
 };
 
-MobiBook.readInteger = function(data, offset, forward) {
-    forward = typeof forward === "undefined" ? true : !!forward;
+// Read a variable width forward-encoded integer starting at data[offset]
+MobiBook.readInteger = function(data, offset) {
     var value = 0;
     while (true) {
         value = ((value << 7) | (data[offset] & 0x7F));
@@ -187,6 +187,22 @@ MobiBook.readInteger = function(data, offset, forward) {
             return value;
         }
         offset++;
+    }
+    // @@@ need to return consumed count or new offset value
+}
+
+// Read a variable width backward-encoded integer ending at data[offset-1]
+MobiBook.readBackwardInteger = function(data, offset) {
+    var value = 0;
+    offset--;
+    var ii = 0;
+    while (true) {
+        value = ((data[offset] & 0x7F) << (7*ii)) | value;
+        if ((data[offset] & 0x80) !== 0) {
+            return value;
+        }
+        offset--;
+        ii++;
     }
     // @@@ need to return consumed count or new offset value
 }
