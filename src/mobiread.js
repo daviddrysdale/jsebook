@@ -171,6 +171,7 @@ var MobiBook = function(data) {
         var info = this.pdfHdr.recordInfo[ii];
         var len = info.recordLen;
         var RECORD_TRAILING_DATA_FLAGS = 0x07;
+        var MULTIBYTE_CHAR_OVERLAP_FLAG = 0x01;
         if (this.mobiHdr.extraRecordDataFlags & RECORD_TRAILING_DATA_FLAGS) {
             // There is trailing <data><size> at the end of each record
             var extraDataLen = MobiBook.readBackwardInteger(data, info.offset + info.recordLen);
@@ -186,6 +187,10 @@ var MobiBook = function(data) {
                 this.html += MobiBook.huffCdicUncompress(data, info.offset, info.offset + len);
             } else {
                 throw Error("Unknown compression " + this.palmDocHdr.compression);
+            }
+            if (this.mobiHdr.extraRecordDataFlags & MULTIBYTE_CHAR_OVERLAP_FLAG) {
+                // completion of multibyte characters included in this record's trailing [<data><size>], and is also
+                // included at the start of the next record
             }
         } else if ((ii >= this.mobiHdr.firstImageRecord) &&
                    (ii < this.mobiHdr.lastContentRecord)) {
