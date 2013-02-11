@@ -35,7 +35,13 @@ var MobiBook = function(data) {
                                         data, this.pdfHdr.recordInfo[0].offset);
     var COMPRESSION = {
         1 : "No compression",
-        2 : "PalmDOC compression"
+        2 : "PalmDOC compression",
+        17480: "HUFF/CDIC compression"
+    };
+    var ENCRYPTION = {
+        0 : "No encryption",
+        1 : "Old MobiPocket encryption",
+        2 : "MobiPocket encryption"
     };
     // Record0: Next is a MOBI header
     if (this.pdfHdr.recordInfo[0].recordLen > 16) {
