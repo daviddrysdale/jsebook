@@ -39,7 +39,7 @@ var MobiBook = function(data) {
     };
     // Record0: Next is a MOBI header
     if (this.pdfHdr.recordInfo[0].recordLen > 16) {
-        this.mobiHdr = BufferPack.unpack("4s(ident)I(hdrLen)I(type)I(encoding)I(uniqueId)I(fileVersion)I(orthoIndex)I(infectionIndex)I(indexNames)I(indexKeys)I(extraIndex0)I(extraIndex1)I(extraIndex2)I(extraIndex3)I(extraIndex4)I(extraIndex5)I(firstNonBookIndex)I(fullNameOffset)I(fullNameLen)I(locale)I(inputLang)I(outputLang)I(minVersion)I(firstImageIndex)I(huffmanRecordOffset)I(huffmanRecordCount)I(huffmanTableOffset)I(huffmanTableLength)I(exthFlags)",
+        this.mobiHdr = BufferPack.unpack("4s(ident)I(hdrLen)I(type)I(encoding)I(uniqueId)I(fileVersion)I(orthoIndex)I(infectionIndex)I(indexNames)I(indexKeys)I(extraIndex0)I(extraIndex1)I(extraIndex2)I(extraIndex3)I(extraIndex4)I(extraIndex5)I(firstNonBookRecord)I(fullNameOffset)I(fullNameLen)I(locale)I(inputLang)I(outputLang)I(minVersion)I(firstImageRecord)I(huffmanRecordOffset)I(huffmanRecordCount)I(huffmanTableOffset)I(huffmanTableLength)I(exthFlags)",
                                          data, this.pdfHdr.recordInfo[0].offset + 16);
         if (this.mobiHdr.ident != "MOBI") throw Error("Unexpected identifier " + this.mobiHdr.ident + " in MOBI header");
         var MOBITYPE = {
@@ -160,6 +160,7 @@ var MobiBook = function(data) {
     // TAGX???
 
     // Record1..RecordN
+    this.html = "";
     for (var ii = 1; ii <  this.pdfHdr.recordInfo.length; ii++) {
         var info = this.pdfHdr.recordInfo[ii];
         var len = info.recordLen;
@@ -169,9 +170,21 @@ var MobiBook = function(data) {
             var extraDataLen = MobiBook.readBackwardInteger(data, info.offset + info.recordLen);
             len -= extraDataLen;
         }
-        if (ii < this.mobiHdr.firstNonBookIndex) {
-            var text = MobiBook.palmDocUncompress(data, info.offset, info.offset + len);
-            console.log(text);
+        if ((ii >= this.mobiHdr.firstContentRecord) &&
+            (ii < this.mobiHdr.firstNonBookRecord)) {
+            if (this.palmDocHdr.compression == 1) {
+                this.html += String.fromCharCode.apply(data.slice(info.offset, info.offset + len));
+            } else if (this.palmDocHdr.compression == 2) {
+                this.html += MobiBook.palmDocUncompress(data, info.offset, info.offset + len);
+            } else if (this.palmDocHdr.compression == 17480) {
+                this.html += MobiBook.huffCdicUncompress(data, info.offset, info.offset + len);
+            } else {
+                throw Error("Unknown compression " + this.palmDocHdr.compression);
+            }
+        } else if ((ii >= this.mobiHdr.firstImageRecord) &&
+                   (ii < this.mobiHdr.lastContentRecord)) {
+            // ????image modiHdr.firstImageRecord mobiHdr.firstContentRecord mobiHdr.lastContentRecord
+            console.log("@@@ image in record " + ii);
         }
     }
 };
