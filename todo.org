@@ -1,0 +1,16 @@
+* .mobi processing
+** TODO check bufferpack dependency
+** TODO huff/cdic compression
+** TODO extract images
+** TODO cope with overlap multibytes
+* HTML transformations
+** TODO filepos offset links
+** TODO mbp:pagebreak tags
+** TODO font sizes
+** TODO A-with-ring entries in ToC
+** TODO validate HTML to find other problems
+* Testing framework
+** TODO better way to insert/display generated book
+** TODO way to inject a specific book to run against
+** TODO run over entire set of available eBooks
+** TODO run jslint automatically
