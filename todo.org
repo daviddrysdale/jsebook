@@ -10,7 +10,8 @@
 ** TODO A-with-ring entries in ToC
 ** TODO validate HTML to find other problems
 * Testing framework
-** TODO better way to insert/display generated book
+** DONE better way to insert/display generated book
+   CLOSED: [2013-02-24 Sun 11:30]
 ** TODO way to inject a specific book to run against
 ** TODO run over entire set of available eBooks
 ** TODO run jslint automatically

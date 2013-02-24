@@ -17,6 +17,20 @@ var loadFileUrl = function (url) {
     }
 }
 
+var addResult = function(htmlData) {
+    var container = document.getElementById('htmlresults');
+    if (container === null) {
+        container = document.createElement('div');
+        container.setAttribute('id', 'htmlresults');
+        document.body.appendChild(container);
+    }
+    var result = document.createElement('div');
+    result.setAttribute('class', 'htmlresult');
+    result.innerHTML = htmlData;
+    container.appendChild(document.createElement('hr'));
+    container.appendChild(result);
+}
+
 describe("MobiRead", function() {
     it("should complain of missing file", function() {
         var loadMissing = function() {
@@ -30,12 +44,7 @@ describe("MobiRead", function() {
         var book = new MobiBook(data);
         expect(book.creationDate()).toEqual(new Date("Sat Sep 22 2012 21:40:59 GMT+0100 (BST)"));
         expect(book.title).toEqual("Lady Susan");
-
-        // @@@ open HTML contents in new window
-        var x = window.open('', '_blank');
-        x.document.open();
-        x.document.write(book.html);
-        x.document.close();
+        addResult(book.html);
     });
     it("should cope with accidental construction without new", function() {
         var book = MobiBook(loadFileUrl("data/testbook.mobi"));
