@@ -176,8 +176,8 @@ MobiBook.palmDocUncompress = function(data, offset, boundary) {
             var len = 3 + (dist_len & 0x07);  // 3 bit length
             var dest_offset = result.length - dist;
             if (dest_offset < 0) {
-                console.log("*************************** dist_len=" + toHex(dist_len) + " : dist=" + dist + " len=" + len + " currentlength=" + result.length);
-                // @@@ throw Error("Compression offset before start of data");
+                var details = "dist_len=" + MobiBook.toHex(dist_len) + " : dist=" + dist + " len=" + len + " currentlength=" + result.length;
+                throw Error("Compression offset before start of data: " + details);
             } else {
                 for (ii = 0; ii < len; ii++) {
                     result.push(result[dest_offset + ii]);
@@ -193,8 +193,8 @@ MobiBook.palmDocUncompress = function(data, offset, boundary) {
     return String.fromCharCode.apply(String, result);
 }
 
-// @@@ temporary for debugging:
-function toHex(number) {
+// Local utility function for debugging
+MobiBook.toHex = function(number) {
     var hexes = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'];
     var hex = '';
     var nibble;
