@@ -26,10 +26,7 @@ describe("MobiRead", function() {
     });
     it("should load and parse a valid file", function() {
         var data;
-        var loadIt = function() {
-            data = loadFileUrl("data/testbook.mobi");
-        }
-        expect(loadIt).not.toThrow();
+        expect(function() {data = loadFileUrl("data/testbook.mobi");}).not.toThrow();
         var book = new MobiBook(data);
         expect(book.creationDate()).toEqual(new Date("Sat Sep 22 2012 21:40:59 GMT+0100 (BST)"));
         expect(book.title).toEqual("Lady Susan");
@@ -41,8 +38,13 @@ describe("MobiRead", function() {
         x.document.close();
     });
     it("should cope with accidental construction without new", function() {
+        var book = MobiBook(loadFileUrl("data/testbook.mobi"));
+        expect(book.title).toEqual("Lady Susan");
     });
     it("should complain of wrong file type", function() {
+        var data = loadFileUrl("src/mobiread.js");
+        var book;
+        expect(function() {book = new MobiBook(data);}).toThrow();
     });
 
 });
