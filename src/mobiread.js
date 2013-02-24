@@ -148,6 +148,10 @@ MobiBook.readBackwardInteger = function(data, offset) {
     // @@@ need to return consumed count or new offset value
 }
 
+
+MobiBook.huffCdicUncompress = function(data, offset, boundary) {
+};
+
 MobiBook.palmDocUncompress = function(data, offset, boundary) {
     var ii;
     var result = [];
@@ -307,3 +311,5 @@ MobiBook.prototype.EXTH_RECORD_TYPE = {
 };
 MobiBook.prototype.RECORD_TRAILING_DATA_FLAGS = 0x07;
 MobiBook.prototype.MULTIBYTE_CHAR_OVERLAP_FLAG = 0x01;
+MobiBook.prototype.HUFF_PROLOG = [0x48, 0x55, 0x46, 0x46, 0x00, 0x00, 0x00, 0x18];  // 'HUFF\0\0\0\x18'
+MobiBook.prototype.CDIC_PROLOG = [0x43, 0x44, 0x49, 0x43, 0x00, 0x00, 0x00, 0x10];  // 'CDIC\0\0\0\x10'
