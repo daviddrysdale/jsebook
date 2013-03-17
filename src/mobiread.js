@@ -84,15 +84,31 @@ var MobiBook = function(data) {
     for (var ii = 1; ii <  this.pdfHdr.recordInfo.length; ii++) {
         var info = this.pdfHdr.recordInfo[ii];
         var len = info.recordLen;
-        if (this.mobiHdr.extraRecordDataFlags & this.RECORD_TRAILING_DATA_FLAGS) {
-            // There is trailing <data><size> at the end of each record
-            var extraDataLen = MobiBook.readBackwardInteger(data, info.offset + info.recordLen);
-            if (extraDataLen > 0 && extraDataLen < 4) {
-                len -= extraDataLen;
-            } else {
-                if (MobiBook.debug) throw Error("Unexpected trailing length " + extraDataLen + " in record " + ii);
+
+        // There is potentially trailing <data><size> at the end of each record, one for each bit in
+        // the flags (after the LSB).
+        var trailing_data_flags = (this.mobiHdr.extraRecordDataFlags & this.RECORD_TRAILING_DATA_FLAGS) >> 1;
+        while (trailing_data_flags != 0) {
+            if (trailing_data_flags & 0x0001) {
+                var extraDataLen = MobiBook.readBackwardInteger(data, info.offset + len);
+                if (extraDataLen > 0) {
+                    len -= extraDataLen;
+                } else {
+                    var debug_data = data.slice(info.offset + len - 6, info.offset + len);
+                    if (MobiBook.debug) throw Error("Unexpected trailing length " + extraDataLen + " in record " + ii);
+                }
             }
+            trailing_data_flags = (trailing_data_flags >> 1);
         }
+
+        if (this.mobiHdr.extraRecordDataFlags & this.MULTIBYTE_CHAR_OVERLAP_FLAG) {
+            // When this bit is set, the text in the record is followed by a trailing entry containing any extra bytes
+            // necessary to complete a multibyte character which crosses the record boundary. The trailing entry ends
+            // with a byte containing a count of the overlapping bytes plus additional flags
+            var num_mb_bytes = data[info.offset + len - 1] & 0x03;
+            len -= (1 + num_mb_bytes);
+        }
+
         if ((ii >= this.mobiHdr.firstContentRecord) &&
             (ii < this.mobiHdr.firstNonBookRecord)) {
             if (this.palmDocHdr.compression == this.COMPRESSION.none) {
@@ -318,7 +334,7 @@ MobiBook.prototype.EXTH_RECORD_TYPE = {
     "asin": 504,
     "language": 524
 };
-MobiBook.prototype.RECORD_TRAILING_DATA_FLAGS = 0x07;
-MobiBook.prototype.MULTIBYTE_CHAR_OVERLAP_FLAG = 0x01;
+MobiBook.prototype.RECORD_TRAILING_DATA_FLAGS = 0xFFF7;
+MobiBook.prototype.MULTIBYTE_CHAR_OVERLAP_FLAG = 0x0001;
 MobiBook.prototype.HUFF_PROLOG = [0x48, 0x55, 0x46, 0x46, 0x00, 0x00, 0x00, 0x18];  // 'HUFF\0\0\0\x18'
 MobiBook.prototype.CDIC_PROLOG = [0x43, 0x44, 0x49, 0x43, 0x00, 0x00, 0x00, 0x10];  // 'CDIC\0\0\0\x10'
