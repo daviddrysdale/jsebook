@@ -60,7 +60,9 @@ var MobiBook = function(data) {
         (this.pdfHdr.recordInfo[0].recordLen > 248)) {
         this.exthHdr = BufferPack.unpack("4s(ident)I(hdrLen)I(numRecords)",
                                          data, this.pdfHdr.recordInfo[0].offset + 248);
-        if (this.exthHdr.ident != "EXTH") throw Error("Unexpected identifier " + this.exthHdr.ident + " in EXTH header");
+        if (this.exthHdr.ident != "EXTH") {
+            throw Error("Unexpected identifier " + this.exthHdr.ident + " in EXTH header");
+        }
         this.exthHdr.record = [];
         offset = this.pdfHdr.recordInfo[0].offset + 260;
 
@@ -85,7 +87,11 @@ var MobiBook = function(data) {
         if (this.mobiHdr.extraRecordDataFlags & this.RECORD_TRAILING_DATA_FLAGS) {
             // There is trailing <data><size> at the end of each record
             var extraDataLen = MobiBook.readBackwardInteger(data, info.offset + info.recordLen);
-            len -= extraDataLen;
+            if (extraDataLen > 0 && extraDataLen < 4) {
+                len -= extraDataLen;
+            } else {
+                if (MobiBook.debug) throw Error("Unexpected trailing length " + extraDataLen + " in record " + ii);
+            }
         }
         if ((ii >= this.mobiHdr.firstContentRecord) &&
             (ii < this.mobiHdr.firstNonBookRecord)) {
@@ -109,6 +115,9 @@ var MobiBook = function(data) {
         }
     }
 };
+
+// If debug is set to true, recoverable decoding errors will generate exceptions.
+MobiBook.debug = false;
 
 MobiBook.dateConvert = function(timestamp) {
     // Timestamp is relative to an epoch of either 1904-01-01 (as uint32) or 1970-01-01.
