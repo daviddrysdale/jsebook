@@ -7,7 +7,14 @@
 ** TODO filepos offset links
 ** TODO mbp:pagebreak tags
 ** TODO font sizes
-** TODO A-with-ring entries in ToC
+** TODO A-with-ring entries
+Example: in LastColony get a sequence like
+6e 'n'
+c3a2   U+00E2
+c280   U+0080
+c299   U+0099
+73 's'
+at a place where you'd expect a single quote mark (i.e. U+0039 or U+2019).
 ** TODO validate HTML to find other problems
 * Testing framework
 ** DONE better way to insert/display generated book
