@@ -29,3 +29,17 @@ var addResult = function(htmlData) {
     container.appendChild(document.createElement('hr'));
     container.appendChild(result);
 }
+
+var addRawResult = function(htmlData) {
+    var container = document.getElementById('rawresults');
+    if (container === null) {
+        container = document.createElement('div');
+        container.setAttribute('id', 'rawresults');
+        document.body.appendChild(container);
+    }
+    var result = document.createElement('div');
+    result.setAttribute('class', 'rawresult');
+    result.textContent = htmlData;
+    container.appendChild(document.createElement('hr'));
+    container.appendChild(result);
+}

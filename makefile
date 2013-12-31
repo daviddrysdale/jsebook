@@ -1,5 +1,3 @@
-
-
 server:
 	python -m SimpleHTTPServer
 test:
