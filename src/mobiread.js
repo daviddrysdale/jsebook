@@ -191,10 +191,6 @@ MobiBook.palmDocUncompress = function(data, offset, boundary) {
             var len = data[offset];
             offset++;
             for (ii = 0; ii < len; ii++) {
-                if (data[offset + ii] < 0x20 || data[offset + ii] >= 0x7f) {
-                    // non-ascii value
-                    if (MobiBook.debug) throw Error("Non-ASCII value at " + offset);
-                }
                 result.push(data[offset + ii]);
             }
             offset += len;
@@ -241,7 +237,82 @@ MobiBook.palmDocUncompress = function(data, offset, boundary) {
             offset++;
         }
     }
+    // The result array still potentially contains UTF-8 encodings.  Decode first.
+    result = MobiBook.utf8Decode(result, 0, result.length);
     return String.fromCharCode.apply(String, result);
+}
+
+MobiBook.utf8Decode = function(data, offset, len) {
+    var result = [];
+    var ii = 0;
+    var value;
+    while (ii < len) {
+        var c1 = data[offset + ii];
+        if (c1 <= 0x7f) {  // 0b0xxxxxxx
+            value = c1;
+            result.push(value);
+            ii++;
+        } else if (c1 <= 0xbf) { // 0x10xxxxxx error as first byte
+            if (MobiBook.debug) throw Error("Invalid first UTF-8 byte " + c1 + " at " + (offset+ii));
+            ii++;
+        } else if (c1 <= 0xdf) { // 0b110xxxxx 0b10xxxxxx
+            if ((ii + 1) >= len) {
+                if (MobiBook.debug) throw Error("Invalid first UTF-8 byte " + c1 + " at " + (offset+ii) + " - not enough data");
+            } else {
+                value = (((c1 & 0x1f) << 6) +
+                         (data[offset + ii + 1] & 0x3f));
+                result.push(value);
+            }
+            ii += 2;
+        } else if (c1 <= 0xef) { // 0b1110xxxx 0b10xxxxxx 0b10xxxxxx
+            if ((ii + 2) >= len) {
+                if (MobiBook.debug) throw Error("Invalid first UTF-8 byte " + c1 + " at " + (offset+ii) + " - not enough data");
+            } else {
+                value = (((c1 & 0x0f) << 12) +
+                         ((data[offset + ii + 1] & 0x3f) << 6) +
+                         (data[offset + ii + 2] & 0x3f));
+                result.push(value);
+            }
+            ii += 3;
+        } else if (c1 <= 0xf7) { // 0b11110xxx 0b10xxxxxx 0b10xxxxxx 0b10xxxxxx
+            if ((ii + 3) >= len) {
+                if (MobiBook.debug) throw Error("Invalid first UTF-8 byte " + c1 + " at " + (offset+ii) + " - not enough data");
+            } else {
+                value = (((c1 & 0x0f) << 18) +
+                         ((data[offset + ii + 1] & 0x3f) << 12) +
+                         ((data[offset + ii + 2] & 0x3f) << 6) +
+                         (data[offset + ii + 3] & 0x3f));
+                result.push(value);
+            }
+            ii += 4;
+        } else if (c1 <= 0xfb) { // 0b111110xx 0b10xxxxxx 0b10xxxxxx 0b10xxxxxx 0b10xxxxxx
+            if ((ii + 4) >= len) {
+                if (MobiBook.debug) throw Error("Invalid first UTF-8 byte " + c1 + " at " + (offset+ii) + " - not enough data");
+            } else {
+                value = (((c1 & 0x0f) << 24) +
+                         ((data[offset + ii + 1] & 0x3f) << 18) +
+                         ((data[offset + ii + 2] & 0x3f) << 12) +
+                         ((data[offset + ii + 3] & 0x3f) << 6) +
+                         (data[offset + ii + 4] & 0x3f));
+                result.push(value);
+            }
+            ii += 5;
+        } else if (c1 <= 0xfd) { // 0b1111110x 0b10xxxxxx 0b10xxxxxx 0b10xxxxxx 0b10xxxxxx 0b10xxxxxx
+            if ((ii + 5) >= len) {
+                if (MobiBook.debug) throw Error("Invalid first UTF-8 byte " + c1 + " at " + (offset+ii) + " - not enough data");
+            } else {
+                value = (((c1 & 0x0f) << 30) +
+                         ((data[offset + ii + 1] & 0x3f) << 24) +
+                         ((data[offset + ii + 2] & 0x3f) << 18) +
+                         ((data[offset + ii + 3] & 0x3f) << 12) +
+                         ((data[offset + ii + 4] & 0x3f) << 6) +
+                         (data[offset + ii + 5] & 0x3f));
+                result.push(value);
+            }
+            ii += 6;
+        }
+    }
+    return result;
 }
 
 // Local utility function for debugging

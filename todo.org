@@ -7,7 +7,8 @@
 ** TODO filepos offset links
 ** TODO mbp:pagebreak tags
 ** TODO font sizes
-** TODO A-with-ring entries
+** DONE A-with-ring entries
+   CLOSED: [2014-01-01 Wed 19:29]
 Example: in LastColony get a sequence like
 6e 'n'
 c3a2   U+00E2
