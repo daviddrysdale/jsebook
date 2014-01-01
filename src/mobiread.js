@@ -183,19 +183,40 @@ MobiBook.palmDocUncompress = function(data, offset, boundary) {
     var ASCII_SPACE = 0x20;
     while (offset < boundary) {
         if (data[offset] === 0) {
+            // 1 literal
             result.push(0);
             offset++;
         } else if (data[offset] >= 0x01 && data[offset] <= 0x08) {
+            // literals: copy 1-8 following bytes to output
             var len = data[offset];
             offset++;
             for (ii = 0; ii < len; ii++) {
+                if (data[offset + ii] < 0x20 || data[offset + ii] >= 0x7f) {
+                    // non-ascii value
+                    if (MobiBook.debug) throw Error("Non-ASCII value at " + offset);
+                }
                 result.push(data[offset + ii]);
             }
             offset += len;
-        } else if (data[offset] >= 0x09 && data[offset] <= 0x7f) {
+        } else if (data[offset] >= 0x09 && data[offset] < 0x20) {
+            // 1 literal (control character)
             result.push(data[offset]);
             offset++;
-        } else if (data[offset] >= 0x80 && data[offset] <= 0xbf) {
+        } else if (data[offset] >= 0x20 && data[offset] < 0x7f) {
+            // 1 literal (printable ASCII character)
+            result.push(data[offset]);
+            offset++;
+        } else if (data[offset] == 0x7f) {
+            // 1 literal (DEL control character)
+            result.push(data[offset]);
+            offset++;
+        } else if (data[offset] >= 0x80 && data[offset] < 0xc0) {
+            if (offset + 1 >= boundary) {
+                if (MobiBook.debug) throw Error("Unexpected trailing length " + extraDataLen + " in record " + ii);
+                offset++;
+                continue;
+            }
+            // length, distance pair: copy 3-10 bytes from earlier location
             var dist_len = (((data[offset] & 0x3F) << 8) | data[offset+1]);  // 14 bit distance+length
             var dist = (dist_len >> 3);  // 11 bit offset backwards
             var len = 3 + (dist_len & 0x07);  // 3 bit length
@@ -210,7 +231,12 @@ MobiBook.palmDocUncompress = function(data, offset, boundary) {
             }
             offset += 2;
         } else {  // data[offset] >= 0xc0
+            // byte pair: this byte becomes (space, byte XOR 0x80)
             result.push(ASCII_SPACE);
+            if ((data[offset] ^ 0x80) < 0x20 || (data[offset] ^ 0x80) >= 0x7f) {
+                // non-ascii value
+                if (MobiBook.debug) throw Error("Non-ASCII value at " + offset);
+            }
             result.push(data[offset] ^ 0x80);
             offset++;
         }
