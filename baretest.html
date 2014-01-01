@@ -1,0 +1,22 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+  "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+  <title>jsebook Book Test</title>
+  <script type="text/javascript" src="lib/bufferpack/bufferpack.js"></script>
+  <script type="text/javascript" src="src/mobiread.js"></script>
+  <script type="text/javascript" src="spec/mobiread_util.js"></script>
+  <script type="text/javascript">
+    function loadBook() {
+        var data;
+        data = loadFileUrl("data/testbook.mobi");
+        var book = new MobiBook(data);
+        addRawResult(book.html);
+        addResult(book.html);
+    }
+  </script>
+</head>
+<body onload="loadBook()">
+</body>
+</html>
+
