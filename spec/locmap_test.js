@@ -69,4 +69,32 @@ describe("LocationMap", function() {
         expect(lm.findNext(13)).toEqual(103);
         expect(lm.find(75)).toEqual(225);
     });
+    it("should merge maps with dest offset", function () {
+        var lm = new LocationMap();
+        lm.addRange(0, 5, 1);
+        lm.addRange(50, 50, 100);
+
+        var lm2 = new LocationMap();
+        lm2.addRange(100, 12, 0);
+        lm2.addRange(120, 5, 20);
+
+        lm.mergeLocationMap(lm2, 0, 200);
+        expect(lm.findNext(8)).toEqual(100);
+        expect(lm.find(101)).toEqual(201);
+        expect(lm.find(123)).toEqual(223);
+    });
+    it("should merge maps with src offset", function () {
+        var lm = new LocationMap();
+        lm.addRange(0, 5, 1);
+        lm.addRange(50, 50, 100);
+
+        var lm2 = new LocationMap();
+        lm2.addRange(100, 12, 200);
+        lm2.addRange(120, 5, 220);
+
+        lm.mergeLocationMap(lm2, 1000, 0);
+        expect(lm.findNext(8)).toEqual(100);
+        expect(lm.find(1101)).toEqual(201);
+        expect(lm.find(1123)).toEqual(223);
+    });
 });

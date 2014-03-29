@@ -28,6 +28,11 @@ LocationMap.prototype.addRange = function(src, len, dest) {
     }
 }
 
+LocationMap.prototype.mergeLocationMap = function(other, src_offset, dst_offset) {
+    for (var src in other.map) {
+        this.add(parseInt(src) + src_offset, other.map[src] + dst_offset);
+    }
+}
 
 // Find the output position that src maps to.
 LocationMap.prototype.find = function(src) {
