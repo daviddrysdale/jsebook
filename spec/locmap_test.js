@@ -60,4 +60,13 @@ describe("LocationMap", function() {
         expect(lm.findNext(40)).toEqual(-1);
         expect(lm.findNext(-2)).toEqual(10);
     });
+    it("should add ranges", function () {
+        var lm = new LocationMap();
+        lm.addRange(10, 5, 100);
+        lm.addRange(50, 50, 200);
+        lm.add(122, 333);
+        expect(lm.findNext(123)).toEqual(-1);
+        expect(lm.findNext(13)).toEqual(103);
+        expect(lm.find(75)).toEqual(225);
+    });
 });
