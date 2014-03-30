@@ -28,10 +28,25 @@ LocationMap.prototype.addRange = function(src, len, dest) {
     }
 }
 
+// Add the contents of another location map to this, allowing for both
+// src and dest offsets
 LocationMap.prototype.mergeLocationMap = function(other, src_offset, dst_offset) {
     for (var src in other.map) {
         this.add(parseInt(src) + src_offset, other.map[src] + dst_offset);
     }
+}
+
+// Compose with another location map
+LocationMap.prototype.compose = function(other) {
+    composed = {}
+    for (var s in this.map) {
+        var src = parseInt(s);
+        var middle = this.map[src];
+        if (middle in other.map) {
+            composed[src] = other.map[middle];
+        }
+    }
+    this.map = composed;
 }
 
 // Find the output position that src maps to.

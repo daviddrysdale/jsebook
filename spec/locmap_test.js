@@ -97,4 +97,24 @@ describe("LocationMap", function() {
         expect(lm.find(1101)).toEqual(201);
         expect(lm.find(1123)).toEqual(223);
     });
+    it("should compose with another map", function () {
+        var lm = new LocationMap();
+        lm.addRange(0, 5, 100);
+        lm.addRange(10, 10, 120);
+
+        var lm2 = new LocationMap();
+        lm2.addRange(102, 2, 200);
+        lm2.addRange(110, 10, 300);
+        lm2.addRange(125, 5, 400);
+
+        lm.compose(lm2);
+        expect(lm.find(0)).toEqual(-1);
+        expect(lm.find(2)).toEqual(200);
+        expect(lm.find(3)).toEqual(201);
+        expect(lm.find(4)).toEqual(-1);
+        expect(lm.find(10)).toEqual(-1);
+        expect(lm.find(15)).toEqual(400);
+        expect(lm.find(19)).toEqual(404);
+        expect(lm.find(110)).toEqual(-1);
+    });
 });
