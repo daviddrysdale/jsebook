@@ -445,7 +445,7 @@ MobiBook.prototype.EXTH_RECORD_TYPE = {
     "asin": 504,
     "language": 524
 };
-MobiBook.prototype.RECORD_TRAILING_DATA_FLAGS = 0xFFF7;
+MobiBook.prototype.RECORD_TRAILING_DATA_FLAGS = 0x0007;
 MobiBook.prototype.MULTIBYTE_CHAR_OVERLAP_FLAG = 0x0001;
 MobiBook.prototype.HUFF_PROLOG = [0x48, 0x55, 0x46, 0x46, 0x00, 0x00, 0x00, 0x18];  // 'HUFF\0\0\0\x18'
 MobiBook.prototype.CDIC_PROLOG = [0x43, 0x44, 0x49, 0x43, 0x00, 0x00, 0x00, 0x10];  // 'CDIC\0\0\0\x10'
