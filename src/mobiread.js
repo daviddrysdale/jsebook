@@ -62,16 +62,16 @@ var MobiBook = function(data) {
         this.exthHdr = BufferPack.unpack("4s(ident)I(hdrLen)I(numRecords)",
                                          data, this.pdfHdr.recordInfo[0].offset + 248);
         if (this.exthHdr.ident != "EXTH") {
-            throw Error("Unexpected identifier " + this.exthHdr.ident + " in EXTH header");
-        }
-        this.exthHdr.record = [];
-        offset = this.pdfHdr.recordInfo[0].offset + 260;
-
-        for (var ii = 0; ii < this.exthHdr.numRecords; ii++) {
-            var record = BufferPack.unpack("I(type)I(len)", data, offset);
-            record.data = BufferPack.unpack((record.len - 8) + "s", data, offset + 8)[0];
-            this.exthHdr.record.push(record);
-            offset += record.len;
+            console.log("Unexpected identifier " + this.exthHdr.ident + " in EXTH header");
+        } else {
+            this.exthHdr.record = [];
+            offset = this.pdfHdr.recordInfo[0].offset + 260;
+            for (var ii = 0; ii < this.exthHdr.numRecords; ii++) {
+                var record = BufferPack.unpack("I(type)I(len)", data, offset);
+                record.data = BufferPack.unpack((record.len - 8) + "s", data, offset + 8)[0];
+                this.exthHdr.record.push(record);
+                offset += record.len;
+            }
         }
     }
 
