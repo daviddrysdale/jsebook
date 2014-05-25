@@ -5,6 +5,7 @@ var MobiBook = function(data) {
         return new MobiBook(data); // protect against calls without new
     }
     this.data = data;
+    this.images = [];
     //  @@ throw if no BufferPack?
 
     // First thing should be a Palm Database Format header
@@ -134,8 +135,11 @@ var MobiBook = function(data) {
             }
         } else if ((ii >= this.mobiHdr.firstImageRecord) &&
                    (ii < this.mobiHdr.lastContentRecord)) {
+            this.images.push(data.slice(info.offset, info.offset + len));
             // ????image modiHdr.firstImageRecord mobiHdr.firstContentRecord mobiHdr.lastContentRecord
-            console.log("@@@ image in record " + ii);
+            console.log("@@@ images[" + (this.images.length - 1) + "] in record " + ii +
+                        " from [" + info.offset + ", " + (info.offset + len) + ") len=" + len);
+            // @@@ <img recindex="0001" ../> numbered 1..12
         }
     }
 };
