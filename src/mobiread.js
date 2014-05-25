@@ -85,6 +85,14 @@ var MobiBook = function(data) {
         var info = this.pdfHdr.recordInfo[ii];
         var len = info.recordLen;
 
+        if (ii < (this.pdfHdr.recordInfo.length - 1)) {
+            var len_to_next = (this.pdfHdr.recordInfo[ii+1].offset - info.offset);
+            if (len_to_next != len) {
+                if (MobiBook.debug) throw Error("Record " + ii + " claims len=" + len + " but next record is " + len_to_next + " away!");
+                len = len_to_next;
+            }
+        }
+
         if ((ii >= this.mobiHdr.firstContentRecord) &&
             (ii < this.mobiHdr.firstNonBookRecord)) {
             // There is potentially trailing <data><size> at the end of each record, one for each bit in
