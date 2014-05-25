@@ -85,32 +85,32 @@ var MobiBook = function(data) {
         var info = this.pdfHdr.recordInfo[ii];
         var len = info.recordLen;
 
-        // There is potentially trailing <data><size> at the end of each record, one for each bit in
-        // the flags (after the LSB).
-        var trailing_data_flags = (this.mobiHdr.extraRecordDataFlags & this.RECORD_TRAILING_DATA_FLAGS) >> 1;
-        while (trailing_data_flags != 0) {
-            if (trailing_data_flags & 0x0001) {
-                var extraDataLen = MobiBook.readBackwardInteger(data, info.offset + len);
-                if (extraDataLen > 0) {
-                    len -= extraDataLen;
-                } else {
-                    var debug_data = data.slice(info.offset + len - 6, info.offset + len);
-                    if (MobiBook.debug) throw Error("Unexpected trailing length " + extraDataLen + " in record " + ii);
-                }
-            }
-            trailing_data_flags = (trailing_data_flags >> 1);
-        }
-
-        if (this.mobiHdr.extraRecordDataFlags & this.MULTIBYTE_CHAR_OVERLAP_FLAG) {
-            // When this bit is set, the text in the record is followed by a trailing entry containing any extra bytes
-            // necessary to complete a multibyte character which crosses the record boundary. The trailing entry ends
-            // with a byte containing a count of the overlapping bytes plus additional flags
-            var num_mb_bytes = data[info.offset + len - 1] & 0x03;
-            len -= (1 + num_mb_bytes);
-        }
-
         if ((ii >= this.mobiHdr.firstContentRecord) &&
             (ii < this.mobiHdr.firstNonBookRecord)) {
+            // There is potentially trailing <data><size> at the end of each record, one for each bit in
+            // the flags (after the LSB).
+            var trailing_data_flags = (this.mobiHdr.extraRecordDataFlags & this.RECORD_TRAILING_DATA_FLAGS) >> 1;
+            while (trailing_data_flags != 0) {
+                if (trailing_data_flags & 0x0001) {
+                    var extraDataLen = MobiBook.readBackwardInteger(data, info.offset, len);
+                    if (extraDataLen > 0) {
+                        len -= extraDataLen;
+                    } else {
+                        var debug_data = data.slice(info.offset + len - 6, info.offset + len);
+                        if (MobiBook.debug) throw Error("Unexpected trailing length " + extraDataLen + " in record " + ii);
+                    }
+                }
+                trailing_data_flags = (trailing_data_flags >> 1);
+            }
+
+            if (this.mobiHdr.extraRecordDataFlags & this.MULTIBYTE_CHAR_OVERLAP_FLAG) {
+                // When this bit is set, the text in the record is followed by a trailing entry containing any extra bytes
+                // necessary to complete a multibyte character which crosses the record boundary. The trailing entry ends
+                // with a byte containing a count of the overlapping bytes plus additional flags
+                var num_mb_bytes = data[info.offset + len - 1] & 0x03;
+                len -= (1 + num_mb_bytes);
+            }
+
             if (this.palmDocHdr.compression == this.COMPRESSION.none) {
                 this.html += String.fromCharCode.apply(data.slice(info.offset, info.offset + len));
             } else if (this.palmDocHdr.compression == this.COMPRESSION.palmDoc) {
