@@ -157,20 +157,22 @@ MobiBook.readInteger = function(data, offset) {
     // @@@ need to return consumed count or new offset value
 }
 
-// Read a variable width backward-encoded integer ending at data[offset-1]
-MobiBook.readBackwardInteger = function(data, offset) {
+// Read a variable width backward-encoded integer ending at data[offset + len -1]
+MobiBook.readBackwardInteger = function(data, offset, len) {
+    // @@@ need to return consumed count or new offset value as well as the value
     var value = 0;
-    offset--;
+    var where = offset + len - 1;
     var ii = 0;
-    while (true) {
-        value = ((data[offset] & 0x7F) << (7*ii)) | value;
-        if ((data[offset] & 0x80) !== 0) {
+    while (where >= offset) {
+        value = ((data[where] & 0x7F) << (7*ii)) | value;
+        if ((data[where] & 0x80) !== 0) {
             return value;
         }
-        offset--;
+        where--;
         ii++;
     }
-    // @@@ need to return consumed count or new offset value
+    console.log("readBackwardInteger from [offset=" + offset + ", +len= " + len + ") returns 0 due to overrun");
+    return 0;
 }
 
 
