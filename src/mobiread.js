@@ -62,7 +62,7 @@ var MobiBook = function(data) {
         this.exthHdr = BufferPack.unpack("4s(ident)I(hdrLen)I(numRecords)",
                                          data, this.pdfHdr.recordInfo[0].offset + 248);
         if (this.exthHdr.ident != "EXTH") {
-            console.log("Unexpected identifier " + this.exthHdr.ident + " in EXTH header");
+            MobiBook.warn("Unexpected identifier " + this.exthHdr.ident + " in EXTH header");
         } else {
             this.exthHdr.record = [];
             offset = this.pdfHdr.recordInfo[0].offset + 260;
@@ -89,7 +89,7 @@ var MobiBook = function(data) {
         if (ii < (this.pdfHdr.recordInfo.length - 1)) {
             var len_to_next = (this.pdfHdr.recordInfo[ii+1].offset - info.offset);
             if (len_to_next != len) {
-                if (MobiBook.debug) throw Error("Record " + ii + " claims len=" + len + " but next record is " + len_to_next + " away!");
+                MobiBook.err("Record " + ii + " claims len=" + len + " but next record is " + len_to_next + " away!");
                 len = len_to_next;
             }
         }
@@ -106,7 +106,7 @@ var MobiBook = function(data) {
                         len -= extraDataLen;
                     } else {
                         var debug_data = data.slice(info.offset + len - 6, info.offset + len);
-                        if (MobiBook.debug) throw Error("Unexpected trailing length " + extraDataLen + " in record " + ii);
+                        MobiBook.err("Unexpected trailing length " + extraDataLen + " in record " + ii);
                     }
                 }
                 trailing_data_flags = (trailing_data_flags >> 1);
@@ -144,8 +144,22 @@ var MobiBook = function(data) {
     }
 };
 
-// If debug is set to true, recoverable decoding errors will generate exceptions.
-MobiBook.debug = false;
+// If strict is set to true, recoverable decoding errors will generate exceptions.
+MobiBook.strict = false;
+MobiBook.debug = true;
+
+MobiBook.err = function(msg) {
+    if (MobiBook.strict) {
+        throw Error(msg);
+    } else {
+        console.log("Error: " + msg);
+    }
+}
+MobiBook.warn = function(msg) {
+    if (MobiBook.debug) {
+        console.log("Warning: " + msg);
+    }
+}
 
 MobiBook.dateConvert = function(timestamp) {
     // Timestamp is relative to an epoch of either 1904-01-01 (as uint32) or 1970-01-01.
@@ -183,7 +197,7 @@ MobiBook.readBackwardInteger = function(data, offset, len) {
         where--;
         ii++;
     }
-    console.log("readBackwardInteger from [offset=" + offset + ", +len= " + len + ") returns 0 due to overrun");
+    MobiBook.warn("readBackwardInteger from [offset=" + offset + ", +len= " + len + ") returns 0 due to overrun");
     return 0;
 }
 
@@ -222,7 +236,7 @@ MobiBook.palmDocUncompress = function(data, offset, boundary) {
             offset++;
         } else if (data[offset] >= 0x80 && data[offset] < 0xc0) {
             if (offset + 1 >= boundary) {
-                if (MobiBook.debug) throw Error("Unexpected trailing length " + extraDataLen + " in record " + ii);
+                MobiBook.err("Unexpected trailing length " + extraDataLen + " in record " + ii);
                 offset++;
                 continue;
             }
@@ -245,7 +259,7 @@ MobiBook.palmDocUncompress = function(data, offset, boundary) {
             result.push(ASCII_SPACE);
             if ((data[offset] ^ 0x80) < 0x20 || (data[offset] ^ 0x80) >= 0x7f) {
                 // non-ascii value
-                if (MobiBook.debug) throw Error("Non-ASCII value at " + offset);
+                MobiBook.err("Non-ASCII value at " + offset);
             }
             result.push(data[offset] ^ 0x80);
             offset++;
@@ -267,11 +281,11 @@ MobiBook.utf8Decode = function(data, offset, len) {
             result.push(value);
             ii++;
         } else if (c1 <= 0xbf) { // 0x10xxxxxx error as first byte
-            if (MobiBook.debug) throw Error("Invalid first UTF-8 byte " + c1 + " at " + (offset+ii));
+            MobiBook.err("Invalid first UTF-8 byte " + c1 + " at " + (offset+ii));
             ii++;
         } else if (c1 <= 0xdf) { // 0b110xxxxx 0b10xxxxxx
             if ((ii + 1) >= len) {
-                if (MobiBook.debug) throw Error("Invalid first UTF-8 byte " + c1 + " at " + (offset+ii) + " - not enough data");
+                MobiBook.err("Invalid first UTF-8 byte " + c1 + " at " + (offset+ii) + " - not enough data");
             } else {
                 value = (((c1 & 0x1f) << 6) +
                          (data[offset + ii + 1] & 0x3f));
@@ -280,7 +294,7 @@ MobiBook.utf8Decode = function(data, offset, len) {
             ii += 2;
         } else if (c1 <= 0xef) { // 0b1110xxxx 0b10xxxxxx 0b10xxxxxx
             if ((ii + 2) >= len) {
-                if (MobiBook.debug) throw Error("Invalid first UTF-8 byte " + c1 + " at " + (offset+ii) + " - not enough data");
+                MobiBook.err("Invalid first UTF-8 byte " + c1 + " at " + (offset+ii) + " - not enough data");
             } else {
                 value = (((c1 & 0x0f) << 12) +
                          ((data[offset + ii + 1] & 0x3f) << 6) +
@@ -290,7 +304,7 @@ MobiBook.utf8Decode = function(data, offset, len) {
             ii += 3;
         } else if (c1 <= 0xf7) { // 0b11110xxx 0b10xxxxxx 0b10xxxxxx 0b10xxxxxx
             if ((ii + 3) >= len) {
-                if (MobiBook.debug) throw Error("Invalid first UTF-8 byte " + c1 + " at " + (offset+ii) + " - not enough data");
+                MobiBook.err("Invalid first UTF-8 byte " + c1 + " at " + (offset+ii) + " - not enough data");
             } else {
                 value = (((c1 & 0x0f) << 18) +
                          ((data[offset + ii + 1] & 0x3f) << 12) +
@@ -301,7 +315,7 @@ MobiBook.utf8Decode = function(data, offset, len) {
             ii += 4;
         } else if (c1 <= 0xfb) { // 0b111110xx 0b10xxxxxx 0b10xxxxxx 0b10xxxxxx 0b10xxxxxx
             if ((ii + 4) >= len) {
-                if (MobiBook.debug) throw Error("Invalid first UTF-8 byte " + c1 + " at " + (offset+ii) + " - not enough data");
+                MobiBook.err("Invalid first UTF-8 byte " + c1 + " at " + (offset+ii) + " - not enough data");
             } else {
                 value = (((c1 & 0x0f) << 24) +
                          ((data[offset + ii + 1] & 0x3f) << 18) +
@@ -313,7 +327,7 @@ MobiBook.utf8Decode = function(data, offset, len) {
             ii += 5;
         } else if (c1 <= 0xfd) { // 0b1111110x 0b10xxxxxx 0b10xxxxxx 0b10xxxxxx 0b10xxxxxx 0b10xxxxxx
             if ((ii + 5) >= len) {
-                if (MobiBook.debug) throw Error("Invalid first UTF-8 byte " + c1 + " at " + (offset+ii) + " - not enough data");
+                MobiBook.err("Invalid first UTF-8 byte " + c1 + " at " + (offset+ii) + " - not enough data");
             } else {
                 value = (((c1 & 0x0f) << 30) +
                          ((data[offset + ii + 1] & 0x3f) << 24) +
