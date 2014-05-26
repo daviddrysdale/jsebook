@@ -161,11 +161,23 @@ var MobiBook = function(data) {
         if (pos == prevpos) {  // Only insert once per offset
             continue;
         }
-        var insert = '<a name="offset' + pos + '"/>';
-        var before = this.html.slice(0, pos + 1);
-        var after = this.html.slice(pos + 1);
-        this.html = [before, insert, after].join('');
         prevpos = pos;
+        var insert = '<a name="offset' + pos + '"/>';
+        // Don't want to insert inside a tag.  Hunt backwards for < or >
+        var at = pos - 1;
+        while (at >= 0) {
+            var c = this.html[at];
+            if (c == '<' || c == '>') {
+                break;
+            }
+            at--;
+        }
+        if (this.html[at] == '<') {
+            pos = at;
+        }
+        var before = this.html.slice(0, pos);
+        var after = this.html.slice(pos);
+        this.html = [before, insert, after].join('');
     }
     // Replace <a filepos=NNN> links with <a href="#offsetNNN> links
     for (ii = 0; ii< dests.length; ii++) {
