@@ -143,14 +143,41 @@ var MobiBook = function(data) {
             this.images.push(image);
         }
     }
+    this.html = this.barehtml;
+
+    // Find all '<a filepos=\d+>' links
+    var re_link = /<a +filepos="?(\d+)"? *>/ig;
+    var dests = [];
+    var found;
+    while (found = re_link.exec(this.barehtml)) {
+        dests.push(parseInt(found[1], 10));
+    }
+    // Sort descending so later insertions don't move earlier insertion points.
+    dests.sort(function(a, b) { return b-a; });
+    var prevpos = -1;
+    for (ii = 0; ii< dests.length; ii++) {
+        // Insert '<a name="offsetNNNN"/>' at offset NNNN=dests[ii]
+        var pos = dests[ii];
+        if (pos == prevpos) {  // Only insert once per offset
+            continue;
+        }
+        var insert = '<a name="offset' + pos + '"/>';
+        var before = this.html.slice(0, pos + 1);
+        var after = this.html.slice(pos + 1);
+        this.html = [before, insert, after].join('');
+        prevpos = pos;
+    }
+    // Replace <a filepos=NNN> links with <a href="#offsetNNN> links
+    for (ii = 0; ii< dests.length; ii++) {
+        var pos = dests[ii];
+        var re_ref = new RegExp('<a +filepos="?0*' + pos + '"?', "ig");
+        this.html = this.html.replace(re_ref, '<a href="#offset' + pos + '"');
+    }
 
     // Insert images, replacing 'recindex="00001" with numbering starting at 1.
-    this.html = this.barehtml;
     for (ii = 0; ii < this.images.length; ii++) {
-        var spattern = new RegExp('recindex="0*' + (ii+1) + '"', "i");
-        this.html = this.html.replace(spattern,
-                                      "src='data:image/png;base64," +
-                                      MobiBook.base64Encode(this.images[ii]) + "'");
+        var re_img = new RegExp('recindex="0*' + (ii+1) + '"', "i");
+        this.html = this.html.replace(re_img, "src='data:image/png;base64," + MobiBook.base64Encode(this.images[ii]) + "'");
     }
 };
 
