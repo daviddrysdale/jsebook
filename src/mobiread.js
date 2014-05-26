@@ -81,7 +81,7 @@ var MobiBook = function(data) {
     // TAGX???
 
     // Record1..RecordN
-    this.html = "";
+    this.barehtml = "";
     for (var ii = 1; ii <  this.pdfHdr.recordInfo.length; ii++) {
         var info = this.pdfHdr.recordInfo[ii];
         var len = info.recordLen;
@@ -121,11 +121,11 @@ var MobiBook = function(data) {
             }
 
             if (this.palmDocHdr.compression == this.COMPRESSION.none) {
-                this.html += String.fromCharCode.apply(data.slice(info.offset, info.offset + len));
+                this.barehtml += String.fromCharCode.apply(data.slice(info.offset, info.offset + len));
             } else if (this.palmDocHdr.compression == this.COMPRESSION.palmDoc) {
-                this.html += MobiBook.palmDocUncompress(data, info.offset, info.offset + len);
+                this.barehtml += MobiBook.palmDocUncompress(data, info.offset, info.offset + len);
             } else if (this.palmDocHdr.compression == this.COMPRESSION.huffCdic) {
-                this.html += MobiBook.huffCdicUncompress(data, info.offset, info.offset + len);
+                this.barehtml += MobiBook.huffCdicUncompress(data, info.offset, info.offset + len);
             } else {
                 throw Error("Unknown compression " + this.palmDocHdr.compression);
             }
@@ -135,12 +135,22 @@ var MobiBook = function(data) {
             }
         } else if ((ii >= this.mobiHdr.firstImageRecord) &&
                    (ii < this.mobiHdr.lastContentRecord)) {
-            this.images.push(data.slice(info.offset, info.offset + len));
-            // ????image modiHdr.firstImageRecord mobiHdr.firstContentRecord mobiHdr.lastContentRecord
-            console.log("@@@ images[" + (this.images.length - 1) + "] in record " + ii +
-                        " from [" + info.offset + ", " + (info.offset + len) + ") len=" + len);
-            // @@@ <img recindex="0001" ../> numbered 1..12
+            var image = new Uint8Array(len);
+            var jj;
+            for (jj = 0; jj < len; jj++) {
+                image[jj] = data[info.offset + jj];
+            }
+            this.images.push(image);
         }
+    }
+
+    // Insert images, replacing 'recindex="00001" with numbering starting at 1.
+    this.html = this.barehtml;
+    for (ii = 0; ii < this.images.length; ii++) {
+        var spattern = new RegExp('recindex="0*' + (ii+1) + '"', "i");
+        this.html = this.html.replace(spattern,
+                                      "src='data:image/png;base64," +
+                                      MobiBook.base64Encode(this.images[ii]) + "'");
     }
 };
 
@@ -202,7 +212,52 @@ MobiBook.readBackwardInteger = function(data, offset, len) {
 }
 
 
+MobiBook.base64Encode = function(bytestr) {
+    var BASE64_KEY = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+    var output = "";
+    var c1, c2, c3, e1, e2, e3, e4;
+    var ii = 0;
+    while (ii < bytestr.length) {
+        if ((ii + 2) < bytestr.length) {
+            c1 = bytestr[ii];
+            c2 = bytestr[ii+1];
+            c3 = bytestr[ii+2];
+            ii += 3;
+
+            e1 = c1 >> 2;
+            e2 = ((c1 & 3) << 4) | (c2 >> 4);
+            e3 = ((c2 & 15) << 2) | (c3 >> 6);
+            e4 = c3 & 63;
+        } else if ((ii + 1) < bytestr.length) {
+            c1 = bytestr[ii];
+            c2 = bytestr[ii+1];
+            c3 = 0;
+            ii += 2;
+
+            e1 = c1 >> 2;
+            e2 = ((c1 & 3) << 4) | (c2 >> 4);
+            e3 = ((c2 & 15) << 2) | (c3 >> 6);
+            e4 = 64;
+        } else {
+            c1 = bytestr[ii];
+            c2 = 0;
+            c3 = 0;
+            ii += 1;
+
+            e1 = c1 >> 2;
+            e2 = ((c1 & 3) << 4) | (c2 >> 4);
+            e3 = 64;
+            e4 = 64;
+        }
+
+        output += (BASE64_KEY.charAt(e1) + BASE64_KEY.charAt(e2) +
+                   BASE64_KEY.charAt(e3) + BASE64_KEY.charAt(e4));
+    }
+    return output;
+}
+
 MobiBook.huffCdicUncompress = function(data, offset, boundary) {
+    MobiBook.err("huffCdic unsupported");
 };
 
 MobiBook.palmDocUncompress = function(data, offset, boundary) {

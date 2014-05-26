@@ -1,7 +1,8 @@
 * .mobi processing
 ** TODO check bufferpack dependency
 ** TODO huff/cdic compression
-** TODO extract images
+** DONE extract images
+   CLOSED: [2014-05-26 Mon 08:36]
 ** TODO cope with overlap multibytes
 * HTML transformations
 ** TODO filepos offset links
