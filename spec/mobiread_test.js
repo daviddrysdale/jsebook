@@ -38,6 +38,6 @@ describe("MobiRead utilities", function() {
         bytes[0] = 0x84;
         bytes[1] = 0x22;
         bytes[2] = 0x11;
-        expect(MobiBook.readBackwardInteger(bytes, 3)).toEqual(0x11111);
+        expect(MobiBook.readBackwardInteger(bytes, 0, 3)).toEqual(0x11111);
     });
 });
