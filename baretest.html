@@ -4,14 +4,14 @@
 <head>
   <title>jsebook Book Test</title>
   <script type="text/javascript" src="lib/bufferpack/bufferpack.js"></script>
+  <script type="text/javascript" src="src/locmap.js"></script>
   <script type="text/javascript" src="src/mobiread.js"></script>
   <script type="text/javascript" src="spec/mobiread_util.js"></script>
   <script type="text/javascript">
     function loadBook() {
         var data;
-        data = loadFileUrl("data/testbook-images.mobi");
+        data = loadFileUrl("data/testbook.mobi");
         var book = new MobiBook(data);
-        addRawResult(book.html);
         addResult(book.html);
     }
   </script>

@@ -1,5 +1,6 @@
 
 // Require BufferPack
+// Require LocationMap
 var MobiBook = function(data) {
     if (!(this instanceof MobiBook)) {
         return new MobiBook(data); // protect against calls without new
@@ -82,6 +83,8 @@ var MobiBook = function(data) {
 
     // Record1..RecordN
     this.barehtml = "";
+    var locmap = new LocationMap();
+    var in_offset = 0;
     for (var ii = 1; ii <  this.pdfHdr.recordInfo.length; ii++) {
         var info = this.pdfHdr.recordInfo[ii];
         var len = info.recordLen;
@@ -121,10 +124,23 @@ var MobiBook = function(data) {
             }
 
             if (this.palmDocHdr.compression == this.COMPRESSION.none) {
+                locmap.addRange(in_offset, len, this.barehtml.length);
+                in_offset += len;
                 this.barehtml += String.fromCharCode.apply(data.slice(info.offset, info.offset + len));
             } else if (this.palmDocHdr.compression == this.COMPRESSION.palmDoc) {
-                this.barehtml += MobiBook.palmDocUncompress(data, info.offset, info.offset + len);
+                var compmap = new LocationMap();
+                var result = MobiBook.palmDocUncompress(data, info.offset, info.offset + len, compmap);
+
+                var in_len = compmap.max() + 1;
+                // The LocationMap returned from uncompress describes the mapping from [0, in_len)
+                // to [0, out_len).  Add this into our master LocationMap at the relevant offsets.
+                locmap.mergeLocationMap(compmap, in_offset, this.barehtml.length);
+                in_offset += in_len;
+                this.barehtml += result;
             } else if (this.palmDocHdr.compression == this.COMPRESSION.huffCdic) {
+                locmap.addRange(in_offset, len, this.barehtml.length);
+                in_offset += len;
+                // @@@ update locmap
                 this.barehtml += MobiBook.huffCdicUncompress(data, info.offset, info.offset + len);
             } else {
                 throw Error("Unknown compression " + this.palmDocHdr.compression);
@@ -162,9 +178,12 @@ var MobiBook = function(data) {
             continue;
         }
         prevpos = pos;
+        // Translate the offset to be relative to the barehtml.
+        var xpos = locmap.findNext(pos);
+
         var insert = '<a name="offset' + pos + '"/>';
         // Don't want to insert inside a tag.  Hunt backwards for < or >
-        var at = pos - 1;
+        var at = xpos - 1;
         while (at >= 0) {
             var c = this.html[at];
             if (c == '<' || c == '>') {
@@ -173,10 +192,10 @@ var MobiBook = function(data) {
             at--;
         }
         if (this.html[at] == '<') {
-            pos = at;
+            xpos = at;
         }
-        var before = this.html.slice(0, pos);
-        var after = this.html.slice(pos);
+        var before = this.html.slice(0, xpos);
+        var after = this.html.slice(xpos);
         this.html = [before, insert, after].join('');
     }
     // Replace <a filepos=NNN> links with <a href="#offsetNNN> links
@@ -299,8 +318,9 @@ MobiBook.huffCdicUncompress = function(data, offset, boundary) {
     MobiBook.err("huffCdic unsupported");
 };
 
-MobiBook.palmDocUncompress = function(data, offset, boundary) {
+MobiBook.palmDocUncompress = function(data, offset, boundary, locmap) {
     var ii;
+    var start_offset = offset;
     var result = [];
     var ASCII_SPACE = 0x20;
     while (offset < boundary) {
@@ -360,11 +380,13 @@ MobiBook.palmDocUncompress = function(data, offset, boundary) {
         }
     }
     // The result array still potentially contains UTF-8 encodings.  Decode first.
-    result = MobiBook.utf8Decode(result, 0, result.length);
+    // Use a LocationMap to track the changes in offset -- all of the offset values
+    // are relative to the data before UTF-8 decoding.
+    result = MobiBook.utf8Decode(result, 0, result.length, locmap);
     return String.fromCharCode.apply(String, result);
 }
 
-MobiBook.utf8Decode = function(data, offset, len) {
+MobiBook.utf8Decode = function(data, offset, len, locmap) {
     var result = [];
     var ii = 0;
     var value;
@@ -372,6 +394,7 @@ MobiBook.utf8Decode = function(data, offset, len) {
         var c1 = data[offset + ii];
         if (c1 <= 0x7f) {  // 0b0xxxxxxx
             value = c1;
+            locmap.add(offset+ii, result.length);
             result.push(value);
             ii++;
         } else if (c1 <= 0xbf) { // 0x10xxxxxx error as first byte
@@ -383,6 +406,7 @@ MobiBook.utf8Decode = function(data, offset, len) {
             } else {
                 value = (((c1 & 0x1f) << 6) +
                          (data[offset + ii + 1] & 0x3f));
+                locmap.add(offset+ii, result.length);
                 result.push(value);
             }
             ii += 2;
@@ -393,6 +417,7 @@ MobiBook.utf8Decode = function(data, offset, len) {
                 value = (((c1 & 0x0f) << 12) +
                          ((data[offset + ii + 1] & 0x3f) << 6) +
                          (data[offset + ii + 2] & 0x3f));
+                locmap.add(offset+ii, result.length);
                 result.push(value);
             }
             ii += 3;
@@ -404,6 +429,7 @@ MobiBook.utf8Decode = function(data, offset, len) {
                          ((data[offset + ii + 1] & 0x3f) << 12) +
                          ((data[offset + ii + 2] & 0x3f) << 6) +
                          (data[offset + ii + 3] & 0x3f));
+                locmap.add(offset+ii, result.length);
                 result.push(value);
             }
             ii += 4;
@@ -416,6 +442,7 @@ MobiBook.utf8Decode = function(data, offset, len) {
                          ((data[offset + ii + 2] & 0x3f) << 12) +
                          ((data[offset + ii + 3] & 0x3f) << 6) +
                          (data[offset + ii + 4] & 0x3f));
+                locmap.add(offset+ii, result.length);
                 result.push(value);
             }
             ii += 5;
@@ -429,6 +456,7 @@ MobiBook.utf8Decode = function(data, offset, len) {
                          ((data[offset + ii + 3] & 0x3f) << 12) +
                          ((data[offset + ii + 4] & 0x3f) << 6) +
                          (data[offset + ii + 5] & 0x3f));
+                locmap.add(offset+ii, result.length);
                 result.push(value);
             }
             ii += 6;
