@@ -38,10 +38,16 @@ describe("LocationMap", function() {
         lm.add(9, 31);
         expect(lm.find(2)).toEqual(12);
         expect(lm.find(6)).toEqual(22);
+        expect(lm.min()).toEqual(0);
+        expect(lm.max()).toEqual(9);
     });
     it("should cope with duplicate inserts", function () {
         var lm = new LocationMap();
+        expect(lm.min()).toEqual(-1);
+        expect(lm.max()).toEqual(-1);
         lm.add(0, 10);
+        expect(lm.min()).toEqual(0);
+        expect(lm.max()).toEqual(0);
         lm.add(1, 11);
         lm.add(1, 11);
         lm.add(1, 11);

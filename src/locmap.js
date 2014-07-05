@@ -7,6 +7,23 @@ var LocationMap = function() {
     this.intervals = [];
 }
 
+// Return the least input value
+LocationMap.prototype.min = function() {
+    if (this.intervals.length == 0) {
+        return -1;
+    }
+    return this.intervals[0][this.SRC];
+}
+
+// Return the highest input value
+LocationMap.prototype.max = function() {
+    if (this.intervals.length == 0) {
+        return -1;
+    }
+    var last = this.intervals[this.intervals.length - 1];
+    return last[this.SRC] + last[this.LEN] - 1;
+}
+
 // Record that input position src maps to output position dest
 LocationMap.prototype.add = function(src, dest) {
     return this.addRange(src, 1, dest);
