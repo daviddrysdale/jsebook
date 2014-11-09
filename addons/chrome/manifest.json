@@ -1,0 +1,30 @@
+{
+    "name": "MobiRead",
+    "version": "0.1",
+    "description": "View .mobi format eBooks in the browser.",
+    "homepage_url": "https://github.com/daviddrysdale/jsebook",
+    "icons": {
+        "128": "images/icon.png",
+        "48": "images/icon.png",
+        "16": "images/icon.png"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "http://*/*.mobi*", "file://*/*.mobi",
+                "http://*/*.azw*", "file://*/*.azw",
+                "http://*/*.azw3*", "file://*/*.azw3"
+            ],
+            "js": ["js/mobiread.js"],
+            "run_at": "document_start"
+        }
+    ],
+    "permissions":["*://*/*", "<all_urls>"],
+    "manifest_version": 2,
+    "page_action": {
+        "default_title" : "MobiRead"
+    },
+    "web_accessible_resources": [
+        "mobiread.css"
+    ]
+}
