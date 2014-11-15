@@ -15,7 +15,7 @@
                 "http://*/*.azw*", "file://*/*.azw",
                 "http://*/*.azw3*", "file://*/*.azw3"
             ],
-            "js": ["js/mobiread.js"],
+            "js": ["js/mobiread.js", "js/mobify.js"],
             "run_at": "document_start"
         }
     ],
