@@ -1,5 +1,5 @@
-server:
-	python -m SimpleHTTPServer
+serve:
+	http
 test:
 	open http://127.0.0.1:8000/SpecRunner.html
 baretest:
